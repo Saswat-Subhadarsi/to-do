@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weekly To-Do Calendar</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background: url('background.jpg') no-repeat center center fixed;
+      background-size: contain;
+    }
+
+    .container {
+      background-color: rgba(255, 255, 255, 0.95);
+      max-width: 90%;
+      margin: 40px auto;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .week-info {
+      font-size: 1.5rem;
+      color: #555;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 15px;
+    }
+
+    .day {
+      background-color: #f9f9f9;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+
+    .day h3 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    .date-label {
+      font-size: 0.9rem;
+      color: #888;
+      margin-bottom: 10px;
+    }
+
+    .todo-input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+      margin-bottom: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .todo-list {
+      list-style: none;
+      padding: 0;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .todo-list li {
+      background: #e6f4ea;
+      margin: 5px 0;
+      padding: 5px 8px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+    }
+
+    .remove-btn {
+      background: none;
+      border: none;
+      color: red;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="week-info" id="weekInfo"></div>
+      <h1>Weekly Planner</h1>
+    </div>
+    <div class="calendar" id="calendar"></div>
+  </div>
+
+  <script>
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    function getCurrentWeekInfo() {
+      const today = new Date();
+      const start = new Date(today.getFullYear(), today.getMonth(), 1);
+      const dayOfMonth = today.getDate();
+      const dayOfWeek = start.getDay() || 7;
+      const adjustedDate = dayOfMonth + dayOfWeek - 1;
+      const weekNumber = Math.ceil(adjustedDate / 7);
+      const month = today.toLocaleString('default', { month: 'long' });
+      const year = today.getFullYear();
+      return { weekNumber, month, year };
+    }
+
+    function loadTodos(dayIndex) {
+      const key = `week-${info.weekNumber}-${info.month}-day-${dayIndex}`;
+      return JSON.parse(localStorage.getItem(key)) || [];
+    }
+
+    function saveTodos(dayIndex, todos) {
+      const key = `week-${info.weekNumber}-${info.month}-day-${dayIndex}`;
+      localStorage.setItem(key, JSON.stringify(todos));
+    }
+
+    function renderCalendar() {
+      const calendar = document.getElementById('calendar');
+      calendar.innerHTML = '';
+
+      const today = new Date();
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+
+      days.forEach((day, i) => {
+        const todos = loadTodos(i);
+
+        const dateObj = new Date(monday);
+        dateObj.setDate(monday.getDate() + i);
+        const dateStr = dateObj.toLocaleDateString('default', { day: 'numeric', month: 'short' });
+
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'day';
+
+        const title = document.createElement('h3');
+        title.textContent = day;
+
+        const dateLabel = document.createElement('div');
+        dateLabel.className = 'date-label';
+        dateLabel.textContent = dateStr;
+
+        const input = document.createElement('input');
+        input.className = 'todo-input';
+        input.placeholder = `Add task for ${day}`;
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            const task = input.value.trim();
+            if (task) {
+              todos.push(task);
+              saveTodos(i, todos);
+              renderCalendar();
+            }
+          }
+        });
+
+        const ul = document.createElement('ul');
+        ul.className = 'todo-list';
+
+        todos.forEach((task, idx) => {
+          const li = document.createElement('li');
+          li.textContent = task;
+
+          const btn = document.createElement('button');
+          btn.textContent = '×';
+          btn.className = 'remove-btn';
+          btn.onclick = () => {
+            todos.splice(idx, 1);
+            saveTodos(i, todos);
+            renderCalendar();
+          };
+
+          li.appendChild(btn);
+          ul.appendChild(li);
+        });
+
+        dayDiv.appendChild(title);
+        dayDiv.appendChild(dateLabel);
+        dayDiv.appendChild(input);
+        dayDiv.appendChild(ul);
+        calendar.appendChild(dayDiv);
+      });
+    }
+
+    const info = getCurrentWeekInfo();
+    document.getElementById('weekInfo').textContent = `Week ${info.weekNumber} of ${info.month} ${info.year}`;
+    renderCalendar();
+  </script>
+</body>
+</html>
